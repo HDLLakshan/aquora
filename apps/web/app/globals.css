@@ -1,0 +1,40 @@
+@config "../tailwind.config.ts";
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: 204 45% 98%;
+    --foreground: 216 40% 12%;
+    --primary: 199 92% 56%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 205 76% 94%;
+    --secondary-foreground: 216 35% 18%;
+    --muted: 210 32% 94%;
+    --muted-foreground: 215 18% 45%;
+    --accent: 196 85% 92%;
+    --accent-foreground: 216 35% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 216 40% 12%;
+    --border: 210 30% 90%;
+    --ring: 199 92% 56%;
+    --radius-lg: 1.25rem;
+    --radius-xl: 1.75rem;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

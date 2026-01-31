@@ -8,8 +8,8 @@
     "typecheck": "turbo typecheck"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
     "turbo": "^2.0.0",
     "typescript": "^5.4.0"
   }
 }
-
