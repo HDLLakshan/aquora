@@ -4,6 +4,7 @@ export default function Page() {
   const example = UserSchema.parse({
     id: "user_123",
     name: "Ada Lovelace",
+    role: "meter_reader",
     createdAt: new Date().toISOString()
   });
 
@@ -19,4 +20,3 @@ export default function Page() {
     </main>
   );
 }
-

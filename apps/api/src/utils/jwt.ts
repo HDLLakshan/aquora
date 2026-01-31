@@ -1,7 +1,11 @@
-import * as jwt from "jsonwebtoken";
+import { createRequire } from "node:module";
 import type { Secret, SignOptions } from "jsonwebtoken";
+import type * as JsonWebToken from "jsonwebtoken";
 
 import { env } from "../config/env";
+
+const require = createRequire(import.meta.url);
+const jwt = require("jsonwebtoken") as typeof JsonWebToken;
 
 export type AccessTokenClaims = {
   sub: string;

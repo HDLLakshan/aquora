@@ -6,38 +6,40 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  super_admin
+  secratary
+  president
+  meter_reader
+}
+
 model User {
-  id           String         @id @default(uuid())
-  mobileNumber String         @unique
-  name         String
-  passwordHash String
-
+  id            String         @id @default(uuid())
+  mobileNumber  String         @unique
+  name          String
+  passwordHash  String
+  role          Role           @default(meter_reader)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   refreshTokens RefreshToken[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@index([mobileNumber])
   @@map("users")
 }
 
 model RefreshToken {
-  id        String @id @default(uuid())
-  tokenHash String @unique
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  expiresAt DateTime
-  revokedAt DateTime?
-
+  id                String         @id @default(uuid())
+  tokenHash         String         @unique
+  userId            String
+  createdAt         DateTime       @default(now())
+  expiresAt         DateTime
+  revokedAt         DateTime?
   replacedByTokenId String?
+  ipAddress         String?
+  userAgent         String?
   replacedByToken   RefreshToken?  @relation("RefreshTokenReplacement", fields: [replacedByTokenId], references: [id])
   replacedTokens    RefreshToken[] @relation("RefreshTokenReplacement")
-
-  ipAddress String?
-  userAgent String?
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])

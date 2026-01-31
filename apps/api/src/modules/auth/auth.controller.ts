@@ -33,11 +33,31 @@ function clearRefreshCookie(res: Response) {
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  private getRefreshTokenFromRequest(req: Request): string | undefined {
+    const fromCookie = req.cookies?.[env.AUTH_REFRESH_TOKEN_COOKIE_NAME] as string | undefined;
+    if (fromCookie) return fromCookie;
+
+    const body = req.body as unknown;
+    if (typeof body === "object" && body !== null && "refreshToken" in body) {
+      const refreshToken = (body as { refreshToken?: unknown }).refreshToken;
+      if (typeof refreshToken === "string" && refreshToken.length > 0) return refreshToken;
+    }
+
+    return undefined;
+  }
+
+  private shouldReturnRefreshToken(req: Request): boolean {
+    const header = req.header("x-auth-return-refresh-token");
+    if (!header) return false;
+    return header.toLowerCase() === "true" || header === "1";
+  }
+
   register = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { auth, refreshTokenValue } = await this.authService.register(req.body, getRequestContext(req));
       setRefreshCookie(res, refreshTokenValue);
-      return res.status(201).json({ success: true, data: auth });
+      const data = this.shouldReturnRefreshToken(req) ? { ...auth, refreshToken: refreshTokenValue } : auth;
+      return res.status(201).json({ success: true, data });
     } catch (err) {
       return next(err);
     }
@@ -47,7 +67,8 @@ export class AuthController {
     try {
       const { auth, refreshTokenValue } = await this.authService.login(req.body, getRequestContext(req));
       setRefreshCookie(res, refreshTokenValue);
-      return res.status(200).json({ success: true, data: auth });
+      const data = this.shouldReturnRefreshToken(req) ? { ...auth, refreshToken: refreshTokenValue } : auth;
+      return res.status(200).json({ success: true, data });
     } catch (err) {
       return next(err);
     }
@@ -55,7 +76,7 @@ export class AuthController {
 
   refresh = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const refreshTokenValue = req.cookies?.[env.AUTH_REFRESH_TOKEN_COOKIE_NAME] as string | undefined;
+      const refreshTokenValue = this.getRefreshTokenFromRequest(req);
       if (!refreshTokenValue) {
         throw new ApiError(401, "Missing refresh token");
       }
@@ -65,7 +86,8 @@ export class AuthController {
         getRequestContext(req)
       );
       setRefreshCookie(res, rotated);
-      return res.status(200).json({ success: true, data: auth });
+      const data = this.shouldReturnRefreshToken(req) ? { ...auth, refreshToken: rotated } : auth;
+      return res.status(200).json({ success: true, data });
     } catch (err) {
       if (err instanceof ApiError && err.statusCode === 401) {
         clearRefreshCookie(res);
@@ -76,7 +98,7 @@ export class AuthController {
 
   logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const refreshTokenValue = req.cookies?.[env.AUTH_REFRESH_TOKEN_COOKIE_NAME] as string | undefined;
+      const refreshTokenValue = this.getRefreshTokenFromRequest(req);
       await this.authService.logout(refreshTokenValue);
       clearRefreshCookie(res);
       return res.status(204).send();

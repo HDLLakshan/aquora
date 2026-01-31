@@ -144,6 +144,7 @@ export class AuthService {
       id: user.id,
       mobileNumber: user.mobileNumber,
       name: user.name,
+      role: user.role,
       createdAt: user.createdAt.toISOString()
     };
   }
