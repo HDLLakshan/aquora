@@ -7,5 +7,5 @@ export const proxy = withAuth({
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*"]
+  matcher: ["/dashboard/:path*", "/societies/:path*"]
 };
