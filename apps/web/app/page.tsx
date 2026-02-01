@@ -3,8 +3,11 @@ import { fromIsoDateTime, UserSchema } from "@aquora/shared";
 export default function Page() {
   const example = UserSchema.parse({
     id: "user_123",
-    name: "Ada Lovelace",
-    role: "meter_reader",
+    fullName: "Ada Lovelace",
+    mobileNumber: "94767804166",
+    role: "METER_READER",
+    preferredLanguage: "EN",
+    isActive: true,
     createdAt: new Date().toISOString()
   });
 
@@ -14,7 +17,7 @@ export default function Page() {
     <main>
       <h1>aquora</h1>
       <p>
-        Shared Zod schema parsed users: <strong>{example.name}</strong>
+        Shared Zod schema parsed users: <strong>{example.fullName}</strong>
       </p>
       <p>Created at (Date): {createdAt.toUTCString()}</p>
     </main>

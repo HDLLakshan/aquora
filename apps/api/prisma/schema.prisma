@@ -7,28 +7,305 @@ datasource db {
 }
 
 enum Role {
-  super_admin
-  secratary
-  president
-  meter_reader
+  SUPER_ADMIN
+  PRESIDENT
+  SECRETARY
+  TREASURER
+  METER_READER
+}
+
+enum Language {
+  SI
+  EN
+  TA
+}
+
+enum BillDeliveryMethod {
+  SMS
+  EMAIL
+  PRINTED
+}
+
+enum CustomerStatus {
+  ACTIVE
+  DISCONNECTED
+  INACTIVE
+}
+
+model Society {
+  id              String  @id @default(cuid())
+  name            String
+  address         String?
+  waterBoardRegNo String  @unique
+  isActive        Boolean @default(true)
+
+  billingSchemeJson Json
+  billingDayOfMonth Int?
+  dueDays           Int?
+
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  users                  User[]
+  routes                 Route[]
+  customers              Customer[]
+  billingPeriods         BillingPeriod[]
+  meters                 Meter[]
+  societyRoleAssignments SocietyRoleAssignment[]
+  routeMeterReaders      RouteMeterReader[]
+  customerMeters         CustomerMeter[]
+  meterReadings          MeterReading[]
+  waterBills             WaterBill[]
+  payments               Payment[]
 }
 
 model User {
-  id            String         @id @default(uuid())
-  mobileNumber  String         @unique
-  name          String
-  passwordHash  String
-  role          Role           @default(meter_reader)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  refreshTokens RefreshToken[]
+  id                String   @id @default(cuid())
+  fullName          String
+  mobileNumber      String   @unique
+  passwordHash      String
+  role              Role
+  preferredLanguage Language @default(EN)
+  isActive          Boolean  @default(true)
 
+  societyId String?
+  society   Society? @relation(fields: [societyId], references: [id])
+
+  roleAssignments  SocietyRoleAssignment[]
+  routeAssignments RouteMeterReader[]
+  readings         MeterReading[]          @relation("CapturedBy")
+  payments         Payment[]               @relation("CollectedBy")
+  refreshTokens    RefreshToken[]
+
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@index([societyId])
   @@index([mobileNumber])
   @@map("users")
 }
 
+model SocietyRoleAssignment {
+  id        String  @id @default(cuid())
+  societyId String
+  userId    String
+  role      Role
+  isActive  Boolean @default(true)
+
+  assignedAt   DateTime  @default(now())
+  unassignedAt DateTime?
+
+  society Society @relation(fields: [societyId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@index([societyId, role, isActive])
+}
+
+model Route {
+  id        String  @id @default(cuid())
+  societyId String
+  name      String
+  code      String?
+  isActive  Boolean @default(true)
+
+  society      Society            @relation(fields: [societyId], references: [id])
+  customers    Customer[]
+  meterReaders RouteMeterReader[]
+
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@unique([societyId, name])
+  @@index([societyId])
+}
+
+model RouteMeterReader {
+  id        String  @id @default(cuid())
+  societyId String
+  routeId   String
+  userId    String
+  isActive  Boolean @default(true)
+
+  assignedAt   DateTime  @default(now())
+  unassignedAt DateTime?
+
+  society Society @relation(fields: [societyId], references: [id])
+  route   Route   @relation(fields: [routeId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([routeId, userId, isActive])
+  @@index([societyId])
+}
+
+model Customer {
+  id        String @id @default(cuid())
+  societyId String
+  routeId   String
+
+  accountNo          String
+  fullName           String
+  mobileNumber       String?
+  address            String?
+  email              String?
+  preferredLanguage  Language           @default(EN)
+  billDeliveryMethod BillDeliveryMethod @default(SMS)
+  status             CustomerStatus     @default(ACTIVE)
+
+  openingBalance Decimal @default(0)
+  currentBalance Decimal @default(0)
+
+  society Society @relation(fields: [societyId], references: [id])
+  route   Route   @relation(fields: [routeId], references: [id])
+
+  meters   CustomerMeter[]
+  readings MeterReading[]
+  bills    WaterBill[]
+  payments Payment[]
+
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@unique([societyId, accountNo])
+  @@index([societyId, routeId])
+}
+
+model Meter {
+  id        String  @id @default(cuid())
+  societyId String
+  serialNo  String
+  isActive  Boolean @default(true)
+
+  society       Society         @relation(fields: [societyId], references: [id])
+  customerLinks CustomerMeter[]
+
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@unique([societyId, serialNo])
+}
+
+model CustomerMeter {
+  id         String  @id @default(cuid())
+  societyId  String
+  customerId String
+  meterId    String
+  isActive   Boolean @default(true)
+
+  linkedAt   DateTime  @default(now())
+  unlinkedAt DateTime?
+
+  customer Customer @relation(fields: [customerId], references: [id])
+  meter    Meter    @relation(fields: [meterId], references: [id])
+  society  Society  @relation(fields: [societyId], references: [id])
+
+  @@index([societyId, customerId, isActive])
+}
+
+model BillingPeriod {
+  id          String @id @default(cuid())
+  societyId   String
+  periodYear  Int
+  periodMonth Int
+
+  society  Society        @relation(fields: [societyId], references: [id])
+  readings MeterReading[]
+  bills    WaterBill[]
+
+  createdAt DateTime @default(now())
+  createdBy String?
+
+  @@unique([societyId, periodYear, periodMonth])
+}
+
+model MeterReading {
+  id              String  @id @default(cuid())
+  societyId       String
+  billingPeriodId String
+  customerId      String
+  meterId         String?
+
+  readingValue Decimal
+  readingAt    DateTime
+  capturedById String
+
+  capturedOffline Boolean   @default(false)
+  deviceId        String?
+  syncedAt        DateTime?
+
+  society       Society       @relation(fields: [societyId], references: [id])
+  billingPeriod BillingPeriod @relation(fields: [billingPeriodId], references: [id])
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  capturedBy    User          @relation("CapturedBy", fields: [capturedById], references: [id])
+
+  bill WaterBill?
+
+  @@unique([customerId, billingPeriodId])
+  @@index([societyId, billingPeriodId])
+}
+
+model WaterBill {
+  id              String @id @default(cuid())
+  societyId       String
+  billingPeriodId String
+  customerId      String
+  meterReadingId  String @unique
+
+  billNo           String
+  previousBalance  Decimal
+  consumptionUnits Decimal
+  currentCharge    Decimal
+  totalDue         Decimal
+
+  calculationBreakdownJson Json
+  generatedAt              DateTime @default(now())
+  generatedById            String?
+
+  society       Society       @relation(fields: [societyId], references: [id])
+  billingPeriod BillingPeriod @relation(fields: [billingPeriodId], references: [id])
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  meterReading  MeterReading  @relation(fields: [meterReadingId], references: [id])
+
+  payments Payment[]
+
+  @@unique([customerId, billingPeriodId])
+  @@unique([societyId, billNo])
+}
+
+model Payment {
+  id          String  @id @default(cuid())
+  societyId   String
+  customerId  String
+  waterBillId String?
+
+  amount        Decimal
+  paidAt        DateTime @default(now())
+  collectedById String
+
+  receiptNo String?
+
+  balanceBefore Decimal?
+  balanceAfter  Decimal?
+
+  society     Society    @relation(fields: [societyId], references: [id])
+  customer    Customer   @relation(fields: [customerId], references: [id])
+  waterBill   WaterBill? @relation(fields: [waterBillId], references: [id])
+  collectedBy User       @relation("CollectedBy", fields: [collectedById], references: [id])
+
+  @@index([societyId, customerId])
+}
+
 model RefreshToken {
-  id                String         @id @default(uuid())
+  id                String         @id @default(cuid())
   tokenHash         String         @unique
   userId            String
   createdAt         DateTime       @default(now())

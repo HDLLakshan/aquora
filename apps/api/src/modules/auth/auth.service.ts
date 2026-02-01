@@ -28,8 +28,10 @@ export class AuthService {
     const passwordHash = await hashPassword(input.password);
     const user = await this.repo.createUser({
       mobileNumber: input.mobileNumber,
-      name: input.name,
-      passwordHash
+      fullName: input.fullName,
+      passwordHash,
+      role: input.role,
+      preferredLanguage: input.preferredLanguage
     });
 
     return this.issueTokensForUser(user, ctx);
@@ -143,8 +145,11 @@ export class AuthService {
     return {
       id: user.id,
       mobileNumber: user.mobileNumber,
-      name: user.name,
+      fullName: user.fullName,
       role: user.role,
+      preferredLanguage: user.preferredLanguage,
+      isActive: user.isActive,
+      societyId: user.societyId,
       createdAt: user.createdAt.toISOString()
     };
   }

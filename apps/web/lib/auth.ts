@@ -51,7 +51,8 @@ async function loginWithCredentials(input: z.infer<typeof LoginSchema>) {
 
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   if (!token.refreshToken) {
-    return { ...token, error: "RefreshTokenMissing" };
+    token.error = "RefreshTokenMissing";
+    return token;
   }
 
   try {
@@ -64,31 +65,35 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     });
 
     if (!response.ok) {
-      return { ...token, error: "RefreshAccessTokenError" };
+      token.error = "RefreshAccessTokenError";
+      return token;
     }
 
     const parsed = AuthResponseSchema.safeParse(json);
     if (!parsed.success) {
-      return { ...token, error: "RefreshAccessTokenError" };
+      token.error = "RefreshAccessTokenError";
+      return token;
     }
 
     const authData = parsed.data.data;
     const expiresAt = decodeJwtExpiry(authData.accessToken) ?? Date.now() + 15 * 60 * 1000;
 
-    return {
-      ...token,
-      accessToken: authData.accessToken,
-      accessTokenExpires: expiresAt,
-      refreshToken: authData.refreshToken ?? token.refreshToken,
-      user: {
-        id: authData.user.id,
-        name: authData.user.name,
-        role: authData.user.role,
-        mobileNumber: authData.user.mobileNumber
-      }
+    token.accessToken = authData.accessToken;
+    token.accessTokenExpires = expiresAt;
+    if (authData.refreshToken) {
+      token.refreshToken = authData.refreshToken;
+    }
+    token.user = {
+      id: authData.user.id,
+      name: authData.user.fullName,
+      role: authData.user.role,
+      mobileNumber: authData.user.mobileNumber
     };
+    delete token.error;
+    return token;
   } catch {
-    return { ...token, error: "RefreshAccessTokenError" };
+    token.error = "RefreshAccessTokenError";
+    return token;
   }
 }
 
@@ -96,14 +101,16 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt"
   },
-  secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
+  ...(process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET
+    ? { secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET }
+    : {}),
   providers: [
     Credentials({
       credentials: {
         mobileNumber: { label: "Mobile number", type: "text" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials, _req) {
         const parsed = LoginSchema.safeParse({
           mobileNumber: credentials?.mobileNumber,
           password: credentials?.password
@@ -117,12 +124,12 @@ export const authOptions: NextAuthOptions = {
 
         return {
           id: authData.user.id,
-          name: authData.user.name,
+          name: authData.user.fullName,
           role: authData.user.role,
           mobileNumber: authData.user.mobileNumber,
           accessToken: authData.accessToken,
-          refreshToken: authData.refreshToken,
-          accessTokenExpires: expiresAt
+          accessTokenExpires: expiresAt,
+          ...(authData.refreshToken ? { refreshToken: authData.refreshToken } : {})
         };
       }
     })
@@ -133,18 +140,21 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        return {
-          ...token,
-          accessToken: user.accessToken,
-          refreshToken: user.refreshToken,
-          accessTokenExpires: user.accessTokenExpires,
-          user: {
-            id: user.id,
-            name: user.name,
-            role: user.role,
-            mobileNumber: user.mobileNumber
-          }
+        token.accessToken = user.accessToken;
+        if (user.accessTokenExpires !== undefined) {
+          token.accessTokenExpires = user.accessTokenExpires;
+        }
+        if (user.refreshToken) {
+          token.refreshToken = user.refreshToken;
+        }
+        token.user = {
+          id: user.id,
+          role: user.role,
+          mobileNumber: user.mobileNumber,
+          ...(user.name !== undefined ? { name: user.name } : {})
         };
+        delete token.error;
+        return token;
       }
 
       if (token.accessToken && token.accessTokenExpires && Date.now() < token.accessTokenExpires - 60_000) {

@@ -20,7 +20,7 @@ export function UserSummaryCard() {
       </div>
       <div className="flex items-center justify-between">
         <span className="font-semibold text-slate-700">Role</span>
-        <span className="capitalize">{user.role.replace(/_/g, " ")}</span>
+        <span className="capitalize">{user.role.toLowerCase().replace(/_/g, " ")}</span>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { UserIdSchema, UserRoleSchema } from "./user";
+import { LanguageSchema, UserIdSchema, UserRoleSchema } from "./user";
 
 // Expected format: 94767804166 (digits only, country code + number)
 export const MobileNumberSchema = z.string().trim().regex(/^94\d{9}$/, "Invalid mobile number format");
@@ -9,9 +9,11 @@ export const MobileNumberSchema = z.string().trim().regex(/^94\d{9}$/, "Invalid 
 export const PasswordSchema = z.string().min(8).max(72);
 
 export const RegisterSchema = z.object({
-  name: z.string().trim().min(1),
+  fullName: z.string().trim().min(1),
   mobileNumber: MobileNumberSchema,
-  password: PasswordSchema
+  password: PasswordSchema,
+  role: z.string().min(1, "Role is required.").pipe(UserRoleSchema),
+  preferredLanguage: LanguageSchema.optional().default("EN")
 });
 
 export type RegisterInput = z.infer<typeof RegisterSchema>;
@@ -25,9 +27,12 @@ export type LoginInput = z.infer<typeof LoginSchema>;
 
 export const PublicUserSchema = z.object({
   id: UserIdSchema,
+  fullName: z.string().min(1),
   mobileNumber: MobileNumberSchema,
-  name: z.string().min(1),
   role: UserRoleSchema,
+  preferredLanguage: LanguageSchema,
+  isActive: z.boolean(),
+  societyId: z.string().min(1).optional().nullable(),
   createdAt: z.string().datetime()
 });
 

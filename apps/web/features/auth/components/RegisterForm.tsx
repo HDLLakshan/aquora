@@ -3,10 +3,11 @@
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useController, useForm } from "react-hook-form";
-import { PasswordSchema, RegisterSchema } from "@aquora/shared";
+import { PasswordSchema, RegisterSchema, UserRoleValues } from "@aquora/shared";
 
 import { FormInput } from "../../../components/form/FormInput";
 import { FormPassword } from "../../../components/form/FormPassword";
+import { FormSelect } from "../../../components/form/FormSelect";
 import { FormSubmitButton } from "../../../components/form/FormSubmitButton";
 import { Checkbox } from "../../../components/ui/checkbox";
 import { Label } from "../../../components/ui/label";
@@ -39,9 +40,10 @@ export function RegisterForm() {
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(RegisterFormSchema),
     defaultValues: {
-      name: "",
+      fullName: "",
       mobileNumber: "",
       password: "",
+      role: "",
       acceptTerms: false
     },
     mode: "onTouched"
@@ -55,7 +57,7 @@ export function RegisterForm() {
     control
   });
 
-  const onSubmit = async (data: RegisterPayload) => {
+  const onSubmit = async (data: RegisterFormValues) => {
     await new Promise((resolve) => setTimeout(resolve, 600));
     console.log("Register payload", data);
   };
@@ -63,13 +65,13 @@ export function RegisterForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <FormInput
-        id="name"
+        id="fullName"
         label="Full name"
         type="text"
         autoComplete="name"
         placeholder="Ayesha Perera"
-        error={errors.name?.message}
-        {...register("name")}
+        error={errors.fullName?.message}
+        {...register("fullName")}
       />
 
       <FormInput
@@ -82,6 +84,20 @@ export function RegisterForm() {
         hint="We will convert to +94 format for usage alerts."
         error={errors.mobileNumber?.message}
         {...register("mobileNumber")}
+      />
+
+      <FormSelect
+        id="role"
+        label="Role"
+        error={errors.role?.message}
+        options={[
+          { label: "Select a role", value: "", disabled: true, hidden: true },
+          ...UserRoleValues.map((role) => ({
+            value: role,
+            label: role.toLowerCase().replace(/_/g, " ")
+          }))
+        ]}
+        {...register("role")}
       />
 
       <FormPassword

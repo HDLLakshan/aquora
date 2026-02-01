@@ -1,10 +1,13 @@
-import type { Role } from "@prisma/client";
+import type { Language, Role } from "@prisma/client";
 
 export type PublicUser = {
   id: string;
   mobileNumber: string;
-  name: string;
+  fullName: string;
   role: Role;
+  preferredLanguage: Language;
+  isActive: boolean;
+  societyId?: string | null;
   createdAt: string;
 };
 
