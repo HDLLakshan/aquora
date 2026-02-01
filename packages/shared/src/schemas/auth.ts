@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { UserIdSchema, UserRoleSchema } from "./user";
+
 // Expected format: 94767804166 (digits only, country code + number)
 export const MobileNumberSchema = z.string().trim().regex(/^94\d{9}$/, "Invalid mobile number format");
 
@@ -20,3 +22,21 @@ export const LoginSchema = z.object({
 });
 
 export type LoginInput = z.infer<typeof LoginSchema>;
+
+export const PublicUserSchema = z.object({
+  id: UserIdSchema,
+  mobileNumber: MobileNumberSchema,
+  name: z.string().min(1),
+  role: UserRoleSchema,
+  createdAt: z.string().datetime()
+});
+
+export type PublicUser = z.infer<typeof PublicUserSchema>;
+
+export const AuthSuccessSchema = z.object({
+  user: PublicUserSchema,
+  accessToken: z.string().min(1),
+  refreshToken: z.string().min(1).optional()
+});
+
+export type AuthSuccess = z.infer<typeof AuthSuccessSchema>;

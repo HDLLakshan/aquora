@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -29,6 +31,8 @@ export function LoginForm() {
   const {
     register,
     handleSubmit,
+    setError,
+    clearErrors,
     formState: { errors, isSubmitting }
   } = useForm<LoginFormValues>({
     resolver: zodResolver(LoginFormSchema),
@@ -39,9 +43,26 @@ export function LoginForm() {
     mode: "onTouched"
   });
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
+
   const onSubmit = async (data: LoginPayload) => {
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    console.log("Login payload", data);
+    clearErrors("root");
+    const result = await signIn("credentials", {
+      redirect: false,
+      mobileNumber: data.mobileNumber,
+      password: data.password,
+      callbackUrl
+    });
+
+    if (!result || result.error) {
+      setError("root", { message: "Invalid mobile number or password." });
+      return;
+    }
+
+    router.push(result.url ?? callbackUrl);
+    router.refresh();
   };
 
   return (
