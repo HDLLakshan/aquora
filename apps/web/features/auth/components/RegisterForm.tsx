@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useController, useForm } from "react-hook-form";
 import { PasswordSchema, RegisterSchema } from "@aquora/shared";
 
 import { FormInput } from "../../../components/form/FormInput";
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
+import { FormPassword } from "../../../components/form/FormPassword";
+import { FormSubmitButton } from "../../../components/form/FormSubmitButton";
+import { Checkbox } from "../../../components/ui/checkbox";
+import { Label } from "../../../components/ui/label";
 
 const MobileInputSchema = z
   .string()
@@ -30,9 +31,8 @@ type RegisterFormValues = z.input<typeof RegisterFormSchema>;
 type RegisterPayload = z.output<typeof RegisterFormSchema>;
 
 export function RegisterForm() {
-  const [showPassword, setShowPassword] = useState(false);
-
   const {
+    control,
     register,
     handleSubmit,
     formState: { errors, isSubmitting }
@@ -45,6 +45,14 @@ export function RegisterForm() {
       acceptTerms: false
     },
     mode: "onTouched"
+  });
+
+  const {
+    field: acceptTermsField,
+    fieldState: acceptTermsState
+  } = useController({
+    name: "acceptTerms",
+    control
   });
 
   const onSubmit = async (data: RegisterPayload) => {
@@ -76,52 +84,39 @@ export function RegisterForm() {
         {...register("mobileNumber")}
       />
 
-      <div className="space-y-2">
-        <label htmlFor="password" className="text-sm font-semibold text-slate-700">
-          Create password
-        </label>
-        <div className="relative">
-          <Input
-            id="password"
-            type={showPassword ? "text" : "password"}
-            autoComplete="new-password"
-            placeholder="At least 8 characters"
-            className={`pr-12 ${
-              errors.password ? "border-rose-300 focus-visible:ring-rose-200" : ""
-            }`}
-            aria-invalid={!!errors.password}
-            aria-describedby={errors.password ? "password-error" : undefined}
-            {...register("password")}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-sky-600 transition hover:text-sky-700"
-            aria-pressed={showPassword}
-          >
-            {showPassword ? "Hide" : "Show"}
-          </button>
-        </div>
-        {errors.password && (
-          <p id="password-error" className="text-sm text-rose-600">
-            {errors.password.message}
-          </p>
-        )}
-      </div>
+      <FormPassword
+        id="password"
+        label="Create password"
+        autoComplete="new-password"
+        placeholder="At least 8 characters"
+        error={errors.password?.message}
+        {...register("password")}
+      />
 
       <div className="space-y-2">
-        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm text-slate-600 shadow-sm">
-          <input
-            type="checkbox"
-            className="mt-1 h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-200"
-            {...register("acceptTerms")}
+        <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm text-slate-600 shadow-sm">
+          <Checkbox
+            id="acceptTerms"
+            checked={acceptTermsField.value}
+            onCheckedChange={(checked) => acceptTermsField.onChange(checked === true)}
+            onBlur={acceptTermsField.onBlur}
+            name={acceptTermsField.name}
+            aria-invalid={acceptTermsState.invalid}
+            aria-describedby={acceptTermsState.error ? "acceptTerms-error" : undefined}
+            ref={acceptTermsField.ref}
+            className="mt-1"
           />
-          <span>
+          <Label
+            htmlFor="acceptTerms"
+            className="cursor-pointer text-sm font-normal text-slate-600"
+          >
             I agree to Aquora&apos;s billing terms, data usage policy, and SMS notifications.
-          </span>
-        </label>
-        {errors.acceptTerms && (
-          <p className="text-sm text-rose-600">{errors.acceptTerms.message}</p>
+          </Label>
+        </div>
+        {acceptTermsState.error && (
+          <p id="acceptTerms-error" className="text-sm text-rose-600">
+            {acceptTermsState.error.message}
+          </p>
         )}
       </div>
 
@@ -131,16 +126,11 @@ export function RegisterForm() {
         </div>
       )}
 
-      <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? (
-          <>
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-            Creating account
-          </>
-        ) : (
-          "Create account"
-        )}
-      </Button>
+      <FormSubmitButton
+        isSubmitting={isSubmitting}
+        label="Create account"
+        loadingLabel="Creating account"
+      />
     </form>
   );
 }

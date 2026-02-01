@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { LoginSchema, PasswordSchema } from "@aquora/shared";
 
 import { FormInput } from "../../../components/form/FormInput";
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
+import { FormPassword } from "../../../components/form/FormPassword";
+import { FormSubmitButton } from "../../../components/form/FormSubmitButton";
 
 const MobileInputSchema = z
   .string()
@@ -27,8 +26,6 @@ type LoginFormValues = z.input<typeof LoginFormSchema>;
 type LoginPayload = z.output<typeof LoginFormSchema>;
 
 export function LoginForm() {
-  const [showPassword, setShowPassword] = useState(false);
-
   const {
     register,
     handleSubmit,
@@ -61,38 +58,14 @@ export function LoginForm() {
         {...register("mobileNumber")}
       />
 
-      <div className="space-y-2">
-        <label htmlFor="password" className="text-sm font-semibold text-slate-700">
-          Password
-        </label>
-        <div className="relative">
-          <Input
-            id="password"
-            type={showPassword ? "text" : "password"}
-            autoComplete="current-password"
-            placeholder="Enter your password"
-            className={`pr-12 ${
-              errors.password ? "border-rose-300 focus-visible:ring-rose-200" : ""
-            }`}
-            aria-invalid={!!errors.password}
-            aria-describedby={errors.password ? "password-error" : undefined}
-            {...register("password")}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-sky-600 transition hover:text-sky-700"
-            aria-pressed={showPassword}
-          >
-            {showPassword ? "Hide" : "Show"}
-          </button>
-        </div>
-        {errors.password && (
-          <p id="password-error" className="text-sm text-rose-600">
-            {errors.password.message}
-          </p>
-        )}
-      </div>
+      <FormPassword
+        id="password"
+        label="Password"
+        autoComplete="current-password"
+        placeholder="Enter your password"
+        error={errors.password?.message}
+        {...register("password")}
+      />
 
       {errors.root && (
         <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -100,16 +73,11 @@ export function LoginForm() {
         </div>
       )}
 
-      <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? (
-          <>
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-            Signing in
-          </>
-        ) : (
-          "Sign in"
-        )}
-      </Button>
+      <FormSubmitButton
+        isSubmitting={isSubmitting}
+        label="Sign in"
+        loadingLabel="Signing in"
+      />
     </form>
   );
 }
