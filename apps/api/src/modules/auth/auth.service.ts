@@ -1,4 +1,4 @@
-import type { RefreshToken, User } from "@prisma/client";
+import type { RefreshToken, Role, User } from "@prisma/client";
 import type { LoginInput, RegisterInput } from "@aquora/shared";
 
 import { env } from "../../config/env";
@@ -74,7 +74,7 @@ export class AuthService {
     }
 
     const rotated = await this.rotateRefreshToken(stored, ctx);
-    const auth = this.createAuthSuccess(user);
+    const auth = await this.createAuthSuccess(user);
     return { auth, refreshTokenValue: rotated.value };
   }
 
@@ -107,7 +107,7 @@ export class AuthService {
       user: { connect: { id: user.id } }
     });
 
-    const auth = this.createAuthSuccess(user);
+    const auth = await this.createAuthSuccess(user);
     return { auth, refreshTokenValue };
   }
 
@@ -131,9 +131,32 @@ export class AuthService {
     return { value, tokenHash, id: newToken.id };
   }
 
-  private createAuthSuccess(user: User): AuthSuccess {
-    const accessToken = signAccessToken({ sub: user.id, mobileNumber: user.mobileNumber });
-    return { user: this.toPublicUser(user), accessToken };
+  async resolveAuthContext(user: User): Promise<{ effectiveRole: Role; societyId: string | null }> {
+    if (user.role === "SUPER_ADMIN") {
+      return { effectiveRole: "SUPER_ADMIN", societyId: null };
+    }
+
+    if (user.role === "METER_READER") {
+      return { effectiveRole: "METER_READER", societyId: user.societyId ?? null };
+    }
+
+    const assignment = await this.repo.findActiveSocietyRoleAssignment(user.id);
+    if (assignment) {
+      return { effectiveRole: assignment.role, societyId: assignment.societyId };
+    }
+
+    return { effectiveRole: user.role, societyId: user.societyId ?? null };
+  }
+
+  private async createAuthSuccess(user: User): Promise<AuthSuccess> {
+    const { effectiveRole, societyId } = await this.resolveAuthContext(user);
+    const accessToken = signAccessToken({
+      sub: user.id,
+      mobileNumber: user.mobileNumber,
+      effectiveRole,
+      societyId
+    });
+    return { user: this.toPublicUser(user), accessToken, effectiveRole, societyId };
   }
 
   private refreshExpiryDate(): Date {

@@ -41,7 +41,9 @@ export type PublicUser = z.infer<typeof PublicUserSchema>;
 export const AuthSuccessSchema = z.object({
   user: PublicUserSchema,
   accessToken: z.string().min(1),
-  refreshToken: z.string().min(1).optional()
+  refreshToken: z.string().min(1).optional(),
+  effectiveRole: UserRoleSchema,
+  societyId: z.string().min(1).nullable()
 });
 
 export type AuthSuccess = z.infer<typeof AuthSuccessSchema>;

@@ -12,7 +12,8 @@
     "prisma:migrate": "XDG_CACHE_HOME=./.cache prisma migrate dev",
     "prisma:deploy": "XDG_CACHE_HOME=./.cache prisma migrate deploy",
     "prisma:studio": "XDG_CACHE_HOME=./.cache prisma studio",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test --import tsx"
   },
   "dependencies": {
     "@aquora/shared": "workspace:*",

@@ -1,4 +1,4 @@
-import type { Prisma, RefreshToken, User } from "@prisma/client";
+import type { Prisma, RefreshToken, SocietyRoleAssignment, User } from "@prisma/client";
 
 import { prisma } from "../../config/database";
 
@@ -13,6 +13,10 @@ export class AuthRepository {
 
   findUserById(id: string): Promise<User | null> {
     return prisma.user.findUnique({ where: { id } });
+  }
+
+  findActiveSocietyRoleAssignment(userId: string): Promise<SocietyRoleAssignment | null> {
+    return prisma.societyRoleAssignment.findFirst({ where: { userId, isActive: true }, orderBy: { assignedAt: "desc" } });
   }
 
   createRefreshToken(data: Prisma.RefreshTokenCreateInput): Promise<RefreshToken> {

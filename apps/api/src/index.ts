@@ -6,6 +6,7 @@ import { env } from "./config/env";
 import { API_PREFIX } from "./config/routes";
 import { errorMiddleware } from "./middleware/error.middleware";
 import { authRouter } from "./modules/auth/auth.routes";
+import { societiesRouter } from "./modules/societies/societies.routes";
 
 const app = express();
 
@@ -36,6 +37,7 @@ apiV1Router.get("/health", (_req, res) => {
 });
 
 apiV1Router.use(authRouter());
+apiV1Router.use(societiesRouter());
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });

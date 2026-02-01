@@ -87,6 +87,8 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       id: authData.user.id,
       name: authData.user.fullName,
       role: authData.user.role,
+      effectiveRole: authData.effectiveRole,
+      societyId: authData.societyId,
       mobileNumber: authData.user.mobileNumber
     };
     delete token.error;
@@ -126,6 +128,8 @@ export const authOptions: NextAuthOptions = {
           id: authData.user.id,
           name: authData.user.fullName,
           role: authData.user.role,
+          effectiveRole: authData.effectiveRole,
+          societyId: authData.societyId,
           mobileNumber: authData.user.mobileNumber,
           accessToken: authData.accessToken,
           accessTokenExpires: expiresAt,
@@ -150,6 +154,8 @@ export const authOptions: NextAuthOptions = {
         token.user = {
           id: user.id,
           role: user.role,
+          effectiveRole: user.effectiveRole,
+          societyId: user.societyId,
           mobileNumber: user.mobileNumber,
           ...(user.name !== undefined ? { name: user.name } : {})
         };

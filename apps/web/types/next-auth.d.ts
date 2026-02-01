@@ -8,6 +8,8 @@ declare module "next-auth" {
     user: {
       id: string;
       role: string;
+      effectiveRole: string;
+      societyId: string | null;
       mobileNumber: string;
       name?: string | null;
       email?: string | null;
@@ -18,6 +20,8 @@ declare module "next-auth" {
   interface User {
     id: string;
     role: string;
+    effectiveRole: string;
+    societyId: string | null;
     mobileNumber: string;
     accessToken: string;
     refreshToken?: string;
@@ -33,6 +37,8 @@ declare module "next-auth/jwt" {
     user?: {
       id: string;
       role: string;
+      effectiveRole: string;
+      societyId: string | null;
       mobileNumber: string;
       name?: string | null;
     };

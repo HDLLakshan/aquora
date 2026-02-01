@@ -4,6 +4,8 @@ declare global {
       auth?: {
         userId: string;
         mobileNumber: string;
+        effectiveRole: string;
+        societyId: string | null;
       };
     }
   }

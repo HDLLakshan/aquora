@@ -14,4 +14,6 @@ export type PublicUser = {
 export type AuthSuccess = {
   user: PublicUser;
   accessToken: string;
+  effectiveRole: Role;
+  societyId: string | null;
 };
