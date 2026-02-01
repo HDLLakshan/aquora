@@ -1,7 +1,4 @@
 import type { Prisma, Role, Society, SocietyRoleAssignment, User } from "@prisma/client";
-
-import { prisma } from "../../config/database";
-import { ApiError } from "../../utils/errors";
 import type {
   OfficerAssignInput,
   OfficerAssignmentSummary,
@@ -10,7 +7,10 @@ import type {
   SocietySummary,
   SocietyUpdateInput,
   SocietyUserSummary
-} from "./societies.types";
+} from "@aquora/shared";
+
+import { prisma } from "../../config/database";
+import { ApiError } from "../../utils/errors";
 import type { SocietiesRepository } from "./societies.repository";
 
 type RequestContext = {
@@ -31,7 +31,7 @@ export class SocietiesService {
         name: input.name,
         address: input.address ?? null,
         waterBoardRegNo: input.waterBoardRegNo,
-        billingSchemeJson: input.billingSchemeJson,
+        billingSchemeJson: input.billingSchemeJson as Prisma.InputJsonValue,
         billingDayOfMonth: input.billingDayOfMonth ?? null,
         dueDays: input.dueDays ?? null,
         createdBy: ctx.actorId
@@ -77,7 +77,9 @@ export class SocietiesService {
     if (input.name !== undefined) data.name = input.name;
     if (input.address !== undefined) data.address = input.address;
     if (input.waterBoardRegNo !== undefined) data.waterBoardRegNo = input.waterBoardRegNo;
-    if (input.billingSchemeJson !== undefined) data.billingSchemeJson = input.billingSchemeJson;
+    if (input.billingSchemeJson !== undefined) {
+      data.billingSchemeJson = input.billingSchemeJson as Prisma.InputJsonValue;
+    }
     if (input.billingDayOfMonth !== undefined) data.billingDayOfMonth = input.billingDayOfMonth;
     if (input.dueDays !== undefined) data.dueDays = input.dueDays;
 
