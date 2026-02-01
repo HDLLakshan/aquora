@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { LoginForm } from "../../../features/auth/components/LoginForm";
 
@@ -17,7 +18,9 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-6">
-          <LoginForm />
+          <Suspense fallback={<p className="text-sm text-slate-500">Loading sign in...</p>}>
+            <LoginForm />
+          </Suspense>
         </div>
 
         <div className="mt-6 flex items-center justify-between text-xs text-slate-500">
