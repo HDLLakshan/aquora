@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import "dotenv/config";
 
+import { API_PREFIX } from "./routes";
+
 const booleanFromString = z
   .string()
   .transform((v: string) => v.toLowerCase())
@@ -36,7 +38,7 @@ const envBaseSchema = z.object({
   AUTH_REFRESH_TOKEN_COOKIE_SECURE: z.string().optional().default("false").pipe(booleanFromString),
   AUTH_REFRESH_TOKEN_COOKIE_SAME_SITE: z.enum(["strict", "lax", "none"]).optional().default("strict"),
   AUTH_REFRESH_TOKEN_COOKIE_DOMAIN: z.string().optional(),
-  AUTH_REFRESH_TOKEN_COOKIE_PATH: z.string().optional().default("/auth"),
+  AUTH_REFRESH_TOKEN_COOKIE_PATH: z.string().optional().default(API_PREFIX),
 
   BCRYPT_COST: z.string().optional().default("12").pipe(numberFromString).pipe(bcryptCostSchema)
 });

@@ -3,6 +3,7 @@ import cors from "cors";
 import express from "express";
 
 import { env } from "./config/env";
+import { API_PREFIX } from "./config/routes";
 import { errorMiddleware } from "./middleware/error.middleware";
 import { authRouter } from "./modules/auth/auth.routes";
 
@@ -28,11 +29,19 @@ app.use(
   })
 );
 
+const apiV1Router = express.Router();
+
+apiV1Router.get("/health", (_req, res) => {
+  res.json({ ok: true });
+});
+
+apiV1Router.use(authRouter());
+
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-app.use("/auth", authRouter());
+app.use(API_PREFIX, apiV1Router);
 
 app.use(errorMiddleware);
 
